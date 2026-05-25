@@ -4,8 +4,8 @@ local uiVisible = true
 
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
-local GuiService = game:GetService("GuiService")
 local VirtualUser = game:GetService("VirtualUser")
+local Camera = workspace.CurrentCamera
 
 if CoreGui:FindFirstChild("AutoAcceptUI") then
     CoreGui.AutoAcceptUI:Destroy()
@@ -33,7 +33,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 25)
 Title.BackgroundTransparency = 1
-Title.Text = "Auto Accept (Fixed)"
+Title.Text = "Auto Accept (V2)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.SourceSansBold
@@ -104,14 +104,13 @@ HideBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- ฟังก์ชันจำลองการคลิกแบบฝังลึกทะลุระบบป้องกัน
-local function forceClick(button)
-    button:Activate()
-    GuiService.SelectedObject = button
-    VirtualUser:Button1Down(Vector2.new(0,0))
-    task.wait(0.05)
-    VirtualUser:Button1Up(Vector2.new(0,0))
-    GuiService.SelectedObject = nil
+local function clickAtElement(guiObject)
+    local absPos = guiObject.AbsolutePosition
+    local absSize = guiObject.AbsoluteSize
+    local centerX = absPos.X + (absSize.X / 2)
+    local centerY = absPos.Y + (absSize.Y / 2) + 40 
+    
+    VirtualUser:ClickButton1(Vector2.new(centerX, centerY), Camera.CFrame)
 end
 
 task.spawn(function()
@@ -120,13 +119,14 @@ task.spawn(function()
         
         if systemActive then
             for _, object in ipairs(CoreGui:GetDescendants()) do
-                if object:IsA("TextButton") and object.Visible then
-                    -- ปรับเงื่อนไขให้กว้างขึ้นเผื่อโครงสร้าง UI อัปเดต แต่ยังล็อกเป้าที่คำว่า Accept
+                if object:IsA("TextButton") and object.Visible and object.AbsoluteSize.X > 0 then
                     if object.Text == "Accept" or string.find(string.lower(object.Name), "accept") then
-                        -- ตรวจสอบเพิ่มเติมว่าอยู่ในโซน Notification ของระบบ
-                        if string.find(string.lower(object.Parent.Name), "notification") or string.find(string.lower(object.Parent.Parent.Name), "notification") then
-                            forceClick(object)
-                            task.wait(0.2)
+                        local parentName = object.Parent and string.lower(object.Parent.Name) or ""
+                        local grandParentName = (object.Parent and object.Parent.Parent) and string.lower(object.Parent.Parent.Name) or ""
+                        
+                        if string.find(parentName, "notification") or string.find(grandParentName, "notification") or string.find(parentName, "friend") then
+                            clickAtElement(object)
+                            task.wait(0.3) 
                         end
                     end
                 end
@@ -135,4 +135,4 @@ task.spawn(function()
     end
 end)
 
-print("--- Auto Accept Bug Fixed Loaded ---")
+print("--- Auto Accept V2 (Screen-Click Method) Loaded ---")
