@@ -4,6 +4,8 @@ local uiVisible = true
 
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
+local GuiService = game:GetService("GuiService")
+local VirtualUser = game:GetService("VirtualUser")
 
 if CoreGui:FindFirstChild("AutoAcceptUI") then
     CoreGui.AutoAcceptUI:Destroy()
@@ -31,7 +33,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 25)
 Title.BackgroundTransparency = 1
-Title.Text = "Auto Accept"
+Title.Text = "Auto Accept (Fixed)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.SourceSansBold
@@ -102,6 +104,16 @@ HideBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ฟังก์ชันจำลองการคลิกแบบฝังลึกทะลุระบบป้องกัน
+local function forceClick(button)
+    button:Activate()
+    GuiService.SelectedObject = button
+    VirtualUser:Button1Down(Vector2.new(0,0))
+    task.wait(0.05)
+    VirtualUser:Button1Up(Vector2.new(0,0))
+    GuiService.SelectedObject = nil
+end
+
 task.spawn(function()
     while true do
         task.wait(checkInterval)
@@ -109,9 +121,13 @@ task.spawn(function()
         if systemActive then
             for _, object in ipairs(CoreGui:GetDescendants()) do
                 if object:IsA("TextButton") and object.Visible then
-                    if object.Text == "Accept" and (object.Name == "AcceptButton" or string.find(string.lower(object.Parent.Name), "notification")) then
-                        object:Activate()
-                        task.wait(0.1)
+                    -- ปรับเงื่อนไขให้กว้างขึ้นเผื่อโครงสร้าง UI อัปเดต แต่ยังล็อกเป้าที่คำว่า Accept
+                    if object.Text == "Accept" or string.find(string.lower(object.Name), "accept") then
+                        -- ตรวจสอบเพิ่มเติมว่าอยู่ในโซน Notification ของระบบ
+                        if string.find(string.lower(object.Parent.Name), "notification") or string.find(string.lower(object.Parent.Parent.Name), "notification") then
+                            forceClick(object)
+                            task.wait(0.2)
+                        end
                     end
                 end
             end
@@ -119,4 +135,4 @@ task.spawn(function()
     end
 end)
 
-print("--- Auto Accept UI & System Loaded Successfully ---")
+print("--- Auto Accept Bug Fixed Loaded ---")
