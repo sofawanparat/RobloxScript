@@ -4,8 +4,6 @@ local uiVisible = true
 
 local CoreGui = game:GetService("CoreGui")
 local TweenService = game:GetService("TweenService")
-local VirtualUser = game:GetService("VirtualUser")
-local Camera = workspace.CurrentCamera
 
 if CoreGui:FindFirstChild("AutoAcceptUI") then
     CoreGui.AutoAcceptUI:Destroy()
@@ -33,7 +31,7 @@ UICorner.Parent = MainFrame
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 25)
 Title.BackgroundTransparency = 1
-Title.Text = "Auto Accept (V2)"
+Title.Text = "Auto Accept (Delta Fix)"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.TextSize = 12
 Title.Font = Enum.Font.SourceSansBold
@@ -104,13 +102,22 @@ HideBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-local function clickAtElement(guiObject)
-    local absPos = guiObject.AbsolutePosition
-    local absSize = guiObject.AbsoluteSize
-    local centerX = absPos.X + (absSize.X / 2)
-    local centerY = absPos.Y + (absSize.Y / 2) + 40 
+local function deltaExecuteClick(button)
+    button:Activate()
     
-    VirtualUser:ClickButton1(Vector2.new(centerX, centerY), Camera.CFrame)
+    if firesignal then
+        firesignal(button.MouseButton1Click)
+        firesignal(button.MouseButton1Down)
+    end
+    
+    if getconnections then
+        for _, connection in ipairs(button.MouseButton1Click:GetConnections()) do
+            connection:Fire()
+        end
+        for _, connection in ipairs(button.Activated:GetConnections()) do
+            connection:Fire()
+        end
+    end
 end
 
 task.spawn(function()
@@ -119,14 +126,14 @@ task.spawn(function()
         
         if systemActive then
             for _, object in ipairs(CoreGui:GetDescendants()) do
-                if object:IsA("TextButton") and object.Visible and object.AbsoluteSize.X > 0 then
+                if object:IsA("TextButton") and object.Visible then
                     if object.Text == "Accept" or string.find(string.lower(object.Name), "accept") then
                         local parentName = object.Parent and string.lower(object.Parent.Name) or ""
                         local grandParentName = (object.Parent and object.Parent.Parent) and string.lower(object.Parent.Parent.Name) or ""
                         
                         if string.find(parentName, "notification") or string.find(grandParentName, "notification") or string.find(parentName, "friend") then
-                            clickAtElement(object)
-                            task.wait(0.3) 
+                            deltaExecuteClick(object)
+                            task.wait(0.2)
                         end
                     end
                 end
@@ -135,4 +142,4 @@ task.spawn(function()
     end
 end)
 
-print("--- Auto Accept V2 (Screen-Click Method) Loaded ---")
+print("--- Auto Accept (Delta Mobile Fix) Loaded ---")
